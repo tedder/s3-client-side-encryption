@@ -43,7 +43,9 @@ def encrypt_file(key, in_filename, iv, original_size, out_filename, chunksize=16
                     break
                 elif len(chunk) % 16 != 0:
                     length = 16 - (len(chunk) % 16)
-                    chunk += bytes([length])*length
+                    # not py2 compatible
+                    #chunk += bytes([length])*length
+                    chunk += struct.pack('B', length)*length
                 outfile.write(cipher.encrypt(chunk))
 
 def put_file(ciphertext_blob, new_iv, encrypt_ctx, upload_filename, unencrypted_file_size, bucket_name, key_name):
