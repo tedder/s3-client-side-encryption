@@ -13,6 +13,7 @@ import json
 from Crypto.Cipher import AES # pycryptodome
 from Crypto import Random
 import boto3
+import struct
 import sys
 import os
 
