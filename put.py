@@ -13,7 +13,6 @@ import json
 from Crypto.Cipher import AES # pycryptodome
 from Crypto import Random
 import boto3
-from s3_encryption.client import S3EncryptionClient
 import sys
 import os
 
