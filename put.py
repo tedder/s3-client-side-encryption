@@ -37,17 +37,29 @@ def encrypt_file(key, in_filename, iv, original_size, out_filename, chunksize=16
     with open(in_filename, 'rb') as infile:
         cipher = AES.new(key, AES.MODE_CBC, iv)
 
+        # 3 cases here for padding at the end of file:
+        # - we get a full chunk of 16. pass it through.
+        # - we get a partial chunk at EOF. we pad it up to 16. generally speaking each byte is the byte number, so if we have 7 bytes, the following nine are "07 07 07 07 07 07 07 07 07".
+        # - we get a zero-byte chunk at EOF. This means the file was a perfect multiple of 16, but padding means the end of the file should be padded because IDK why but that's how it's done. See url below:
+        #
+        # the extra padding at zero-byte EOF: http://security.stackexchange.com/a/29997
+        #   "The above problem is solved by knowing that you always pad your data, no matter the length."
         with open(out_filename, 'wb') as outfile:
+            last_chunk_length = 0
             while True:
                 chunk = infile.read(chunksize)
-                if len(chunk) == 0:
-                    break
-                elif len(chunk) % 16 != 0:
-                    length = 16 - (len(chunk) % 16)
-                    # not py2 compatible
-                    #chunk += bytes([length])*length
-                    chunk += struct.pack('B', length)*length
+                last_chunk_length = len(chunk)
+                if last_chunk_length == 0 or last_chunk_length < chunksize:
+                  break
                 outfile.write(cipher.encrypt(chunk))
+
+            # write the final padding
+            length_to_pad = 16 - (last_chunk_length % 16)
+            # not py2 compatible
+            # chunk += bytes([length])*length
+            chunk += struct.pack('B', length_to_pad) * length_to_pad
+            outfile.write(cipher.encrypt(chunk))
+
 
 def put_file(ciphertext_blob, new_iv, encrypt_ctx, upload_filename, unencrypted_file_size, bucket_name, key_name):
 
